@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Critter Cache — Turn Chores into Adventures</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../assets/favicon-16.png">
+<link rel="apple-touch-icon" href="../../assets/favicon.png">
+<style>
+@font-face {
+  font-family: 'Raleway';
+  src: url('../../fonts/Raleway-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Raleway';
+  src: url('../../fonts/Raleway-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brown-dark:   #3B2010;
+  --brown-mid:    #5C3D2E;
+  --brown-light:  #8B5E3C;
+  --parchment:    #F5E6C8;
+  --parchment-dk: #E8D4A8;
+  --parchment-dp: #D4BA85;
+  --gold:         #D4A017;
+  --gold-light:   #F0C040;
+  --gold-btn:     #F4A821;
+  --gold-btn-dk:  #C47800;
+  --teal:         #00897B;
+  --coral:        #FF6F61;
+  --offwhite:     #FFF8F0;
+  --forest:       #1a3009;
+  --forest-mid:   #2D5016;
+  --display:      'Raleway', Georgia, serif;
+  --body:         'Mulish', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--body); background: var(--brown-dark); color: var(--brown-dark); overflow-x: hidden; }
+
+/* ── Parchment texture ── */
+.parchment-bg {
+  background-color: var(--parchment);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed; top: 0; width: 100%; z-index: 100;
+  background: var(--brown-dark);
+  border-bottom: 3px solid var(--gold);
+  padding: 0 48px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 12px;
+  text-decoration: none;
+}
+.nav-logo img { height: 40px; width: auto; }
+.nav-logo-text {
+  font: 800 18px/1 var(--display);
+  color: var(--gold); letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.nav-links { display: flex; gap: 28px; list-style: none; align-items: center; }
+.nav-links a {
+  font: 600 13px var(--body); color: var(--parchment);
+  text-decoration: none; letter-spacing: 1px;
+  text-transform: uppercase; opacity: 0.75;
+  transition: opacity .15s, color .15s;
+}
+.nav-links a:hover { opacity: 1; color: var(--gold); }
+.nav-cta {
+  font: 700 13px var(--body);
+  background: var(--gold-btn); color: white;
+  padding: 9px 22px; border-radius: 4px; border: none; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--brown-dark);
+  transition: transform .15s, box-shadow .15s;
+  text-decoration: none; letter-spacing: .5px;
+}
+.nav-cta:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--brown-dark); }
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 100px 40px 80px;
+  background: var(--brown-dark);
+  position: relative; overflow: hidden;
+}
+.hero-map-bg {
+  position: absolute; inset: 0;
+  background-image: url('../../assets/map-1.jpg');
+  background-size: cover; background-position: center;
+  opacity: 0.12;
+  mix-blend-mode: luminosity;
+  filter: sepia(60%);
+  pointer-events: none;
+}
+.hero-map-overlay {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(59,32,16,.85) 100%),
+    radial-gradient(ellipse at 20% 50%, rgba(74,124,47,.18) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 30%, rgba(212,160,23,.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 0; right: 0; height: 80px;
+  background: var(--parchment);
+  clip-path: polygon(0 100%, 100% 100%, 100% 40%, 85% 0%, 70% 50%, 55% 10%, 40% 60%, 25% 5%, 10% 55%, 0 20%);
+}
+.firefly {
+  position: absolute; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--gold-light);
+  box-shadow: 0 0 8px var(--gold-light), 0 0 20px rgba(240,192,64,.5);
+  animation: float-fly linear infinite; opacity: 0;
+}
+@keyframes float-fly {
+  0%   { transform: translate(0,0); opacity: 0; }
+  20%  { opacity: .8; }
+  80%  { opacity: .5; }
+  100% { transform: translate(var(--dx),var(--dy)); opacity: 0; }
+}
+.hero-logo-wrap {
+  position: relative; margin-bottom: 28px;
+  animation: hero-drop .8s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes hero-drop {
+  from { opacity: 0; transform: translateY(-40px) scale(.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.hero-logo { width: min(500px, 85vw); filter: drop-shadow(0 8px 32px rgba(0,0,0,.65)); }
+.hero-tagline {
+  font: 900 clamp(1.4rem,3.5vw,2.2rem)/1.1 var(--display);
+  color: var(--gold); text-align: center; letter-spacing: 4px;
+  text-transform: uppercase; margin-bottom: 14px;
+  animation: fade-up .8s .3s both;
+  text-shadow: 2px 2px 0 var(--brown-dark), 0 0 30px rgba(212,160,23,.35);
+}
+.hero-sub {
+  font: 400 italic clamp(1rem,2vw,1.2rem)/1.75 var(--body);
+  color: var(--parchment); opacity: .88;
+  text-align: center; max-width: 560px; margin-bottom: 40px;
+  animation: fade-up .8s .5s both;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-buttons {
+  display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 60px; animation: fade-up .8s .7s both;
+}
+.btn-primary {
+  font: 800 1rem/1 var(--display);
+  background: var(--gold-btn); color: white;
+  padding: 15px 38px; border: none; border-radius: 6px; cursor: pointer;
+  box-shadow: 4px 4px 0 var(--brown-dark), inset 0 1px 0 rgba(255,255,255,.2);
+  transition: transform .15s, box-shadow .15s;
+  text-decoration: none; display: inline-block; letter-spacing: .5px;
+}
+.btn-primary:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--brown-dark); }
+.btn-secondary {
+  font: 600 .88rem/1 var(--body);
+  background: transparent; color: var(--parchment);
+  padding: 15px 36px; border: 2px solid rgba(245,230,200,.4);
+  border-radius: 6px; cursor: pointer; text-decoration: none;
+  display: inline-block; letter-spacing: 1.5px; text-transform: uppercase;
+  transition: border-color .2s, color .2s;
+}
+.btn-secondary:hover { border-color: var(--parchment); color: var(--gold); }
+.critter-parade {
+  display: flex; gap: 18px; justify-content: center;
+  animation: fade-up .8s .9s both;
+}
+.critter-badge {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: rgba(245,230,200,.07);
+  border: 2px solid rgba(212,160,23,.30);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.9rem; cursor: default;
+  transition: transform .2s, border-color .2s, background .2s;
+  position: relative;
+}
+.critter-badge:hover {
+  transform: translateY(-8px) scale(1.15);
+  border-color: var(--gold);
+  background: rgba(212,160,23,.14);
+}
+.critter-badge .critter-lbl {
+  position: absolute; bottom: -20px;
+  font: 700 9px/1 var(--body); color: var(--parchment-dk);
+  letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; opacity: .7;
+}
+
+/* ── Section shared ── */
+.section-label {
+  font: 700 10px/1 var(--body); letter-spacing: 5px;
+  text-transform: uppercase; color: var(--brown-light); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-label::before, .section-label::after {
+  content: ''; flex: 1; max-width: 50px; height: 1px;
+  background: currentColor; opacity: .4;
+}
+.section-title {
+  font: 800 clamp(1.8rem,4vw,2.8rem)/1.15 var(--display);
+  color: var(--brown-dark); margin-bottom: 14px; text-wrap: balance;
+}
+.section-title-light { color: var(--gold); }
+.section-body {
+  font: 400 1.05rem/1.8 var(--body); color: var(--brown-mid);
+}
+
+/* Torn edge divider — top */
+.torn-top {
+  position: relative;
+}
+.torn-top::before {
+  content: ''; position: absolute; top: -2px; left: 0; right: 0; height: 70px;
+  background: inherit;
+  clip-path: polygon(0 0, 5% 60%, 10% 10%, 15% 70%, 20% 5%, 25% 75%, 30% 15%, 35% 65%, 40% 0%, 45% 80%, 50% 20%, 55% 70%, 60% 5%, 65% 75%, 70% 20%, 75% 60%, 80% 0%, 85% 70%, 90% 15%, 95% 65%, 100% 10%, 100% 0);
+  z-index: 2;
+}
+
+/* ── Intro ── */
+.intro {
+  padding: 100px 40px 90px;
+  position: relative; overflow: hidden;
+  background: var(--parchment);
+}
+.intro::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url('../../assets/map-2.jpg');
+  background-size: cover; background-position: center top;
+  opacity: 0.10; mix-blend-mode: multiply; filter: sepia(20%);
+  pointer-events: none;
+}
+.intro-inner { position: relative; z-index: 1; }
+.intro-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+}
+.intro-text p { font: 400 1.05rem/1.85 var(--body); color: var(--brown-mid); margin-bottom: 18px; }
+.intro-text p em { font-style: italic; color: var(--brown-mid); opacity: .85; }
+.jar-visual-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+/* ── Features ── */
+.features {
+  padding: 90px 40px 100px; background: var(--brown-dark);
+  background-image:
+    radial-gradient(circle at 15% 85%, rgba(74,124,47,.2) 0%, transparent 40%),
+    radial-gradient(circle at 85% 15%, rgba(92,61,46,.4) 0%, transparent 40%);
+  position: relative; overflow: hidden;
+}
+.features-inner { max-width: 1100px; margin: 0 auto; text-align: center; }
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px; margin-top: 50px;
+}
+.patch-card {
+  position: relative; background: var(--parchment);
+  border: 3px solid var(--brown-mid); border-radius: 16px;
+  padding: 30px 26px; text-align: left;
+  transition: transform .2s;
+  overflow: hidden;
+}
+.patch-card::before {
+  content: ''; position: absolute; inset: 6px;
+  border: 2px dashed rgba(92,61,46,.25); border-radius: 11px; pointer-events: none;
+}
+.patch-card::after {
+  content: ''; position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+  border-radius: 14px; pointer-events: none;
+}
+.patch-card:hover { transform: rotate(-1deg) translateY(-4px); }
+.patch-card:nth-child(even):hover { transform: rotate(1deg) translateY(-4px); }
+.patch-icon { font-size: 2.2rem; margin-bottom: 14px; display: block; }
+.patch-title { font: 700 1.05rem/1.2 var(--display); color: var(--brown-dark); margin-bottom: 8px; }
+.patch-text  { font: 400 .88rem/1.65 var(--body); color: var(--brown-mid); }
+.patch-accent { display: inline-block; margin-top: 12px; font: 700 .72rem/1 var(--body); letter-spacing: 2px; text-transform: uppercase; color: var(--teal); }
+
+/* ── How it works ── */
+.how {
+  padding: 90px 40px; background: var(--parchment-dk);
+  position: relative; overflow: hidden;
+}
+.how::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url('../../assets/map-3.jpg');
+  background-size: cover; background-position: center;
+  opacity: 0.13; mix-blend-mode: multiply; filter: sepia(30%) saturate(60%);
+  pointer-events: none;
+}
+.how-inner { max-width: 960px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+.steps {
+  display: flex; gap: 0; margin-top: 50px;
+  position: relative; flex-wrap: wrap; justify-content: center;
+}
+.steps::before {
+  content: ''; position: absolute; top: 40px; left: 15%; right: 15%; height: 3px;
+  background: repeating-linear-gradient(90deg, var(--brown-mid) 0px, var(--brown-mid) 8px, transparent 8px, transparent 16px);
+  opacity: .35;
+}
+.step { flex: 1; min-width: 180px; max-width: 220px; text-align: center; padding: 0 16px; position: relative; z-index: 1; }
+.step-num {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--brown-dark); border: 4px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; font-size: 2rem;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.2), inset 0 0 20px rgba(212,160,23,.08);
+}
+.step h3 { font: 700 .95rem/1.3 var(--display); color: var(--brown-dark); margin-bottom: 8px; }
+.step p  { font: 400 .84rem/1.6 var(--body); color: var(--brown-mid); }
+
+/* ── Critter roster ── */
+.roster {
+  padding: 90px 40px 100px;
+  background: linear-gradient(170deg, #1a3009 0%, #2D5016 50%, #1a3009 100%);
+  position: relative; overflow: hidden;
+}
+.roster::after {
+  content: ''; position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%2300897B' opacity='.15'/%3E%3Ccircle cx='60' cy='80' r='1' fill='%2300897B' opacity='.1'/%3E%3Ccircle cx='85' cy='35' r='.8' fill='%23D4A017' opacity='.08'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.roster-inner { max-width: 1100px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+.critter-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 22px; margin-top: 48px;
+}
+.critter-card {
+  background: rgba(245,230,200,.07); border: 2px solid rgba(212,160,23,.2);
+  border-radius: 16px; padding: 26px 18px;
+  transition: transform .25s, border-color .25s, background .25s; cursor: default;
+  position: relative; overflow: hidden;
+}
+.critter-card::before {
+  content: ''; position: absolute; inset: 6px;
+  border: 1px dashed rgba(212,160,23,.12); border-radius: 11px; pointer-events: none;
+}
+.critter-card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--gold); background: rgba(212,160,23,.11); }
+.critter-emoji-lg { font-size: 3.2rem; display: block; margin-bottom: 12px; transition: transform .2s; }
+.critter-card:hover .critter-emoji-lg { transform: scale(1.2) rotate(-5deg); }
+.critter-card h3 { font: 700 1rem/1 var(--display); color: var(--gold); margin-bottom: 4px; }
+.critter-personality { font: 400 italic .8rem/1 var(--body); color: rgba(245,230,200,.65); margin-bottom: 8px; display: block; }
+.critter-finds { font: 600 .7rem/1 var(--body); color: rgba(245,230,200,.45); letter-spacing: 1px; text-transform: uppercase; }
+.critter-find-icons { font-size: .95rem; display: block; margin-top: 5px; }
+
+/* ── Economy ── */
+.economy {
+  padding: 90px 40px; background: var(--parchment);
+  position: relative; overflow: hidden;
+}
+.economy::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url('../../assets/map-1.jpg');
+  background-size: cover; background-position: center bottom;
+  opacity: 0.08; mix-blend-mode: multiply; filter: sepia(40%);
+  pointer-events: none;
+}
+.economy-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; position: relative; z-index: 1; }
+.tier-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; border-radius: 10px; margin-bottom: 10px;
+  border: 2px solid transparent; transition: border-color .2s, background .2s;
+}
+.tier-row:hover { background: rgba(92,61,46,.05); border-color: var(--parchment-dp); }
+.tier-coins {
+  font: 700 .95rem/1 var(--display); color: var(--gold);
+  min-width: 80px; text-align: center;
+  background: var(--brown-dark); padding: 7px 10px;
+  border-radius: 6px; border: 2px solid var(--gold);
+}
+.tier-info h4 { font: 700 .82rem/1 var(--body); color: var(--brown-dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+.tier-info p  { font: 400 italic .8rem/1.4 var(--body); color: var(--brown-light); }
+
+/* ── Testimonials ── */
+.testimonials {
+  padding: 80px 40px; background: var(--brown-mid);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='.1'/%3E%3C/svg%3E");
+  position: relative; overflow: hidden;
+}
+.testimonials-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
+.quote-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; margin-top: 40px; }
+.quote-card {
+  background: rgba(245,230,200,.06); border: 1px solid rgba(212,160,23,.22);
+  border-radius: 12px; padding: 26px 20px; text-align: left; position: relative;
+}
+.quote-card::before {
+  content: '"'; position: absolute; top: -14px; left: 16px;
+  font: 400 4rem/1 var(--display); color: var(--gold); opacity: .55;
+}
+.quote-text   { font: 400 italic .88rem/1.72 var(--body); color: var(--parchment); margin-bottom: 14px; }
+.quote-author { font: 700 .72rem/1 var(--body); letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+.quote-stars  { color: var(--gold); font-size: .82rem; margin-bottom: 8px; }
+
+/* ── CTA band ── */
+.cta-band {
+  padding: 100px 40px; background: var(--brown-dark);
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(212,160,23,.15) 0%, transparent 60%);
+  text-align: center; position: relative; overflow: hidden;
+}
+.cta-band::before {
+  content: ''; position: absolute; top: -2px; left: 0; right: 0; height: 60px;
+  background: var(--brown-mid);
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 90% 80%, 80% 20%, 70% 90%, 60% 30%, 50% 100%, 40% 25%, 30% 85%, 20% 10%, 10% 70%, 0 40%);
+}
+.cta-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+.cta-title { font: 900 clamp(2rem,4vw,3rem)/1.2 var(--display); color: var(--gold); margin-bottom: 18px; text-shadow: 2px 2px 0 rgba(0,0,0,.3); }
+.cta-sub { font: 400 italic 1.05rem/1.75 var(--body); color: var(--parchment); opacity: .85; margin-bottom: 36px; }
+.store-badges { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+.store-badge {
+  background: rgba(245,230,200,.07); border: 2px solid rgba(245,230,200,.28);
+  border-radius: 10px; padding: 12px 22px;
+  display: flex; align-items: center; gap: 10px;
+  color: var(--parchment); font: 600 .83rem/1 var(--body); letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.store-badge:hover { border-color: var(--gold); background: rgba(212,160,23,.1); }
+.store-icon { font-size: 1.4rem; }
+.coming-soon { font: 500 .63rem/1 var(--body); color: rgba(245,230,200,.45); display: block; margin-top: 3px; }
+
+/* ── Footer ── */
+footer {
+  background: #1a0e06; border-top: 3px solid var(--gold);
+  padding: 48px 40px; text-align: center;
+}
+.footer-logo { font: 800 1.15rem/1 var(--display); color: var(--gold); letter-spacing: 3px; margin-bottom: 14px; }
+.footer-tagline { font: 400 italic .84rem/1 var(--body); color: rgba(245,230,200,.38); margin-bottom: 22px; }
+.footer-links { display: flex; gap: 24px; justify-content: center; list-style: none; margin-bottom: 22px; flex-wrap: wrap; }
+.footer-links a { font: 500 .78rem/1 var(--body); color: rgba(245,230,200,.45); text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: color .2s; }
+.footer-links a:hover { color: var(--gold); }
+.footer-copy { font: 400 .73rem/1 var(--body); color: rgba(245,230,200,.22); }
+.footer-copy span { color: rgba(212,160,23,.45); }
+
+/* ── Scroll reveal ── */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .65s ease, transform .65s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .intro-inner, .economy-inner { grid-template-columns: 1fr; gap: 40px; }
+  .critter-grid { grid-template-columns: repeat(2,1fr); }
+  .quote-grid { grid-template-columns: 1fr; }
+  .steps::before { display: none; }
+  .step { min-width: 140px; }
+  section { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <img src="../../assets/logo.png" alt="Critter Cache logo">
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#critters">Critters</a></li>
+    <li><a href="#rewards">Rewards</a></li>
+    <li><a href="https://beta.crittercache.app/" class="nav-cta" target="_blank">Open App →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-map-bg"></div>
+  <div class="hero-map-overlay"></div>
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;">
+  <div class="hero-logo-wrap" style="opacity:1;">
+    <img src="../../assets/logo.png" alt="Critter Cache" class="hero-logo">
+  </div>
+  <p class="hero-tagline" style="opacity:1;">Turn Chores into Adventures</p>
+  <p class="hero-sub" style="opacity:1;">The fun, stress-free way to build healthy habits. Kids earn rewards alongside their critter companion, while parents stay in control.</p>
+  <div class="hero-buttons" style="opacity:1;">
+    <a href="https://beta.crittercache.app/" class="btn-primary" target="_blank">🗺️ Open the App</a>
+    <a href="#features" class="btn-secondary">Learn More ↓</a>
+  </div>
+  <div class="critter-parade" style="opacity:1;">
+    <div class="critter-badge">🐱<span class="critter-lbl">Cat</span></div>
+    <div class="critter-badge">🐸<span class="critter-lbl">Frog</span></div>
+    <div class="critter-badge">🦉<span class="critter-lbl">Owl</span></div>
+    <div class="critter-badge">🦊<span class="critter-lbl">Fox</span></div>
+    <div class="critter-badge">🕷️<span class="critter-lbl">Spider</span></div>
+    <div class="critter-badge">🦝<span class="critter-lbl">Raccoon</span></div>
+  </div>
+  </div><!-- end z-index wrapper -->
+</section>
+
+<!-- INTRO -->
+<section class="intro" id="about">
+  <div class="intro-inner">
+    <div class="intro-text reveal">
+      <div class="section-label">The Quest Begins</div>
+      <h2 class="section-title">Morning battles, begone.</h2>
+      <p>Critter Cache transforms the daily routine grind into a treasure-hunting quest. Kids earn coins for completing morning routines, evening chores, and daily extras — watching their critter companion cheer them on with every completed task.</p>
+      <p>Parents stay in control through a PIN-gated admin that works <em>with</em> their schedule, not against it. Batch-approve everything at bedtime, or tap along in real-time — you pick the adventure mode.</p>
+      <a href="#features" class="btn-primary" style="font-size:.9rem;padding:12px 28px;margin-top:8px;display:inline-block;">Explore Features →</a>
+    </div>
+    <div class="jar-visual-wrap reveal">
+      <svg viewBox="0 0 200 280" style="width:160px;filter:drop-shadow(0 16px 40px rgba(92,61,46,.4));" xmlns="http://www.w3.org/2000/svg">
+        <rect x="72" y="18" width="56" height="22" rx="6" fill="#8B5E3C"/>
+        <rect x="78" y="20" width="44" height="18" rx="4" fill="#A0714A"/>
+        <circle cx="100" cy="12" r="5" fill="#6B4226" stroke="#5C3D2E" stroke-width="1.5"/>
+        <path d="M 55 40 Q 48 50 46 80 L 44 220 Q 44 240 100 242 Q 156 240 156 220 L 154 80 Q 152 50 145 40 Z" fill="rgba(200,220,240,.18)" stroke="#B0C4D8" stroke-width="2"/>
+        <path d="M 65 55 Q 60 100 62 160" stroke="rgba(255,255,255,.3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <clipPath id="jc"><path d="M 47 82 L 45 220 Q 45 238 100 240 Q 155 238 155 220 L 153 82 Z"/></clipPath>
+        <g clip-path="url(#jc)">
+          <rect x="44" y="158" width="112" height="82" fill="#D4A017" opacity=".9"/>
+          <rect x="44" y="173" width="112" height="67" fill="#C49010"/>
+          <ellipse cx="100" cy="160" rx="54" ry="8" fill="#E8B820"/>
+          <ellipse cx="100" cy="152" rx="48" ry="7" fill="#D4A017"/>
+          <circle cx="78" cy="175" r="5" fill="#E53935" opacity=".85"/>
+          <circle cx="115" cy="180" r="4" fill="#1E88E5" opacity=".85"/>
+          <circle cx="95" cy="192" r="5" fill="#43A047" opacity=".85"/>
+          <circle cx="130" cy="172" r="4" fill="#AB47BC" opacity=".85"/>
+          <circle cx="68" cy="195" r="3.5" fill="#FF8F00" opacity=".85"/>
+        </g>
+        <path d="M 55 40 Q 48 50 46 80 L 44 220 Q 44 240 100 242 Q 156 240 156 220 L 154 80 Q 152 50 145 40 Z" fill="none" stroke="rgba(180,210,235,.45)" stroke-width="1.5"/>
+        <rect x="58" y="105" width="84" height="40" rx="5" fill="#F5E6C8" opacity=".92"/>
+        <text x="100" y="121" text-anchor="middle" font-family="Raleway,Georgia,serif" font-weight="800" font-size="8.5" fill="#5C3D2E">ICE CREAM</text>
+        <text x="100" y="133" text-anchor="middle" font-family="Raleway,Georgia,serif" font-weight="800" font-size="8.5" fill="#5C3D2E">OUTING</text>
+        <text x="100" y="143" text-anchor="middle" font-family="Mulish,sans-serif" font-size="7" fill="#8B5E3C">18 / 25 coins</text>
+      </svg>
+      <div style="text-align:center;">
+        <div style="font:700 1rem/1 var(--display);color:var(--brown-dark);letter-spacing:1px;">18 / 25 Coins</div>
+        <div style="font:400 italic .84rem/1 var(--body);color:var(--brown-light);margin-top:5px;">72% toward Ice Cream Outing</div>
+        <div style="background:rgba(92,61,46,.15);border-radius:20px;height:10px;width:180px;margin:10px auto 0;overflow:hidden;border:1px solid rgba(92,61,46,.2);">
+          <div style="background:linear-gradient(90deg,#D4A017,#F0C040);height:100%;width:72%;border-radius:20px;box-shadow:0 0 8px rgba(212,160,23,.4);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features torn-top" id="features" style="--torn-bg:var(--parchment-dk);">
+  <div class="features-inner">
+    <div class="reveal">
+      <div class="section-label" style="color:rgba(245,230,200,.45);justify-content:center;">The Features</div>
+      <h2 class="section-title section-title-light">Everything your quest needs</h2>
+    </div>
+    <div class="features-grid">
+      <div class="patch-card reveal">
+        <span class="patch-icon">🗺️</span>
+        <h3 class="patch-title">Adventure-Themed Tasks</h3>
+        <p class="patch-text">Morning routines, evening chores, weekly quests — organized into groups that earn coins on completion. Bonus timers turn getting dressed into a speed challenge.</p>
+        <span class="patch-accent">→ 3 routine types</span>
+      </div>
+      <div class="patch-card reveal">
+        <span class="patch-icon">🏺</span>
+        <h3 class="patch-title">The Reward Jar</h3>
+        <p class="patch-text">Coins fill a glass jar toward a parent-defined goal. When it overflows, confetti and a critter dance follow. Kids see exactly how close they are, every single day.</p>
+        <span class="patch-accent">→ Visual motivation</span>
+      </div>
+      <div class="patch-card reveal">
+        <span class="patch-icon">🔑</span>
+        <h3 class="patch-title">Parent-Powered Control</h3>
+        <p class="patch-text">PIN-gated admin handles everything: task creation, reward management, batch approvals, and bonus coin awards. Real-time or end-of-day — your schedule, your rules.</p>
+        <span class="patch-accent">→ PIN-protected</span>
+      </div>
+      <div class="patch-card reveal">
+        <span class="patch-icon">⚡</span>
+        <h3 class="patch-title">Speed Bonus Timers</h3>
+        <p class="patch-text">Optional countdown timers make tasks into mini-challenges. Beat the clock for a bonus coin. Miss it? No penalty — the task still counts. Excitement, zero stress.</p>
+        <span class="patch-accent">→ Bonus mode only</span>
+      </div>
+      <div class="patch-card reveal">
+        <span class="patch-icon">📅</span>
+        <h3 class="patch-title">Streak Tracking</h3>
+        <p class="patch-text">A full monthly map-calendar shows completion history with color-coded days. Streaks are celebrated. One grace day per week keeps momentum on rough days.</p>
+        <span class="patch-accent">→ Non-punitive design</span>
+      </div>
+      <div class="patch-card reveal">
+        <span class="patch-icon">✨</span>
+        <h3 class="patch-title">Surprise Find Bonuses</h3>
+        <p class="patch-text">Award spontaneous bonus coins from the parent panel. The critter "finds" a treasure item — a golden feather, a shiny acorn — making good behavior feel magical and rare.</p>
+        <span class="patch-accent">→ Rare collectibles</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="reveal">
+      <div class="section-label" style="justify-content:center;">The Method</div>
+      <h2 class="section-title">How the Quest Works</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">🐾</div>
+        <h3>Pick Your Critter</h3>
+        <p>Each child chooses their companion and gives them a name. That critter lives on their home screen and reacts to every completed task.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">☑️</div>
+        <h3>Complete Quests</h3>
+        <p>Morning routines, evening tasks, extras — check them off and watch coins fly into the bank. Parents confirm in real-time or batch-approve at bedtime.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">🏺</div>
+        <h3>Fill the Jar</h3>
+        <p>Coins fill toward a chosen reward goal. The jar shows progress at a glance. When full, the confetti cannon fires and the critter dances.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">🎁</div>
+        <h3>Claim the Reward</h3>
+        <p>Kids redeem their goal with parent confirmation. The reward joins a permanent Trophy Case — a history of every adventure completed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CRITTER ROSTER -->
+<section class="roster torn-top" id="critters">
+  <div class="roster-inner">
+    <div class="reveal">
+      <div class="section-label" style="color:rgba(212,160,23,.45);justify-content:center;">The Companions</div>
+      <h2 class="section-title section-title-light">Choose Your Champion</h2>
+      <p style="font:400 italic 1rem/1 var(--body);color:rgba(245,230,200,.65);margin-top:8px;">Six critters. Six personalities. One loyal companion for every adventure.</p>
+    </div>
+    <div class="critter-grid reveal">
+      <div class="critter-card">
+        <span class="critter-emoji-lg">🐱</span>
+        <h3>The Cat</h3>
+        <span class="critter-personality">Curious &amp; Playful</span>
+        <span class="critter-finds">Finds:</span>
+        <span class="critter-find-icons">🧶 🐟 🪶</span>
+      </div>
+      <div class="critter-card">
+        <span class="critter-emoji-lg">🐸</span>
+        <h3>The Frog</h3>
+        <span class="critter-personality">Energetic &amp; Bouncy</span>
+        <span class="critter-finds">Finds:</span>
+        <span class="critter-find-icons">🌿 🪲 💧</span>
+      </div>
+      <div class="critter-card">
+        <span class="critter-emoji-lg">🦉</span>
+        <h3>The Owl</h3>
+        <span class="critter-personality">Wise &amp; Calm</span>
+        <span class="critter-finds">Finds:</span>
+        <span class="critter-find-icons">📜 🪶 🌙</span>
+      </div>
+      <div class="critter-card">
+        <span class="critter-emoji-lg">🦊</span>
+        <h3>The Fox</h3>
+        <span class="critter-personality">Adventurous &amp; Sly</span>
+        <span class="critter-finds">Finds:</span>
+        <span class="critter-find-icons">🌰 🫐 🗺️</span>
+      </div>
+      <div class="critter-card">
+        <span class="critter-emoji-lg">🕷️</span>
+        <h3>The Spider</h3>
+        <span class="critter-personality">Creative &amp; Crafty</span>
+        <span class="critter-finds">Finds:</span>
+        <span class="critter-find-icons">💎 🕸️ 🪲</span>
+      </div>
+      <div class="critter-card">
+        <span class="critter-emoji-lg">🦝</span>
+        <h3>The Raccoon</h3>
+        <span class="critter-personality">Mischievous &amp; Bold</span>
+        <span class="critter-finds">Finds:</span>
+        <span class="critter-find-icons">🔑 🪙 🔩</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ECONOMY -->
+<section class="economy" id="rewards">
+  <div class="economy-inner">
+    <div class="reveal">
+      <div class="section-label">The Economy</div>
+      <h2 class="section-title">Real Rewards for Real Effort</h2>
+      <p class="section-body" style="margin-bottom:28px;">Parents set the prizes, kids earn the coins. The app handles the math so you can handle the fun part — actually delivering on the reward.</p>
+      <div style="margin-bottom:6px;">
+        <div class="tier-row"><div class="tier-coins">10–15</div><div class="tier-info"><h4>Quick Reward</h4><p>Extra screen time, dessert pick, bonus story at bedtime</p></div></div>
+        <div class="tier-row"><div class="tier-coins">25–35</div><div class="tier-info"><h4>Medium Reward</h4><p>Ice cream outing, movie night pick, new coloring book</p></div></div>
+        <div class="tier-row"><div class="tier-coins">50–75</div><div class="tier-info"><h4>Big Reward</h4><p>Trip to the zoo, new toy, friend sleepover weekend</p></div></div>
+        <div class="tier-row"><div class="tier-coins">100+</div><div class="tier-info"><h4>Epic Reward</h4><p>Theme park visit, big wish-list item, special experience</p></div></div>
+      </div>
+      <p style="font:400 italic .78rem/1 var(--body);color:var(--brown-light);margin-top:12px;">* All coin costs fully customizable. You define what motivation looks like.</p>
+    </div>
+    <div class="jar-visual-wrap reveal">
+      <div style="background:var(--parchment-dk);border:2px solid var(--parchment-dp);border-radius:16px;padding:26px;width:100%;max-width:340px;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:7px;border:1.5px dashed rgba(92,61,46,.2);border-radius:10px;pointer-events:none;"></div>
+        <h3 style="font:700 .95rem/1 var(--display);color:var(--brown-dark);letter-spacing:1px;margin-bottom:18px;text-align:center;">Daily Coin Earning</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(212,160,23,.08);border-radius:8px;border:1px solid rgba(212,160,23,.15);"><span style="font:600 .84rem/1 var(--body);color:var(--brown-mid);">🌅 Morning Routine</span><span style="font:700 .9rem/1 var(--display);color:var(--gold);">1 🪙</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(212,160,23,.08);border-radius:8px;border:1px solid rgba(212,160,23,.15);"><span style="font:600 .84rem/1 var(--body);color:var(--brown-mid);">🌙 Evening Routine</span><span style="font:700 .9rem/1 var(--display);color:var(--gold);">1 🪙</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(212,160,23,.08);border-radius:8px;border:1px solid rgba(212,160,23,.15);"><span style="font:600 .84rem/1 var(--body);color:var(--brown-mid);">📚 Homework</span><span style="font:700 .9rem/1 var(--display);color:var(--gold);">1 🪙</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(212,160,23,.08);border-radius:8px;border:1px solid rgba(212,160,23,.15);"><span style="font:600 .84rem/1 var(--body);color:var(--brown-mid);">🧹 Daily Extras</span><span style="font:700 .9rem/1 var(--display);color:var(--gold);">1 🪙</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(74,124,47,.1);border-radius:8px;border:1px solid rgba(74,124,47,.25);"><span style="font:600 .84rem/1 var(--body);color:#4A7C2F;">✨ Bonus (avg)</span><span style="font:700 .9rem/1 var(--display);color:var(--teal);">~1 🪙</span></div>
+        </div>
+        <div style="border-top:2px solid var(--parchment-dp);padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font:700 .82rem/1 var(--body);color:var(--brown-dark);text-transform:uppercase;letter-spacing:1px;">Daily Total</span>
+          <span style="font:700 1.15rem/1 var(--display);color:var(--gold);">4–5 🪙</span>
+        </div>
+        <div style="text-align:center;margin-top:10px;"><span style="font:400 italic .73rem/1 var(--body);color:var(--brown-light);">~28–35 coins per week before bonuses</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="testimonials-inner">
+    <div class="reveal">
+      <div class="section-label" style="color:rgba(212,160,23,.4);justify-content:center;">From the Trail</div>
+      <h2 class="section-title section-title-light">Families love the adventure</h2>
+    </div>
+    <div class="quote-grid reveal">
+      <div class="quote-card">
+        <div class="quote-stars">★★★★★</div>
+        <p class="quote-text">My 7-year-old literally asks to do her chores now. She wants to fill the jar before school. I don't know what sorcery this is, but I'll take it.</p>
+        <div class="quote-author">— Sarah M., Mom of two</div>
+      </div>
+      <div class="quote-card">
+        <div class="quote-stars">★★★★★</div>
+        <p class="quote-text">The fox critter sold my son immediately. He named it "Scout" and has a 24-day streak going. We've never made it past day 3 with any other app.</p>
+        <div class="quote-author">— James T., Dad of one</div>
+      </div>
+      <div class="quote-card">
+        <div class="quote-stars">★★★★★</div>
+        <p class="quote-text">The batch approval at bedtime is a lifesaver. I can't be standing there with the iPad every time they brush their teeth. This fits our actual life.</p>
+        <div class="quote-author">— Maria K., Mom of three</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-band">
+  <div class="cta-inner reveal">
+    <h2 class="cta-title">Every adventure starts with one task.</h2>
+    <p class="cta-sub">Set up in minutes. Free to start. No subscriptions, no data harvesting — just your family, your goals, and a jar full of earned coins.</p>
+    <a href="https://beta.crittercache.app/" class="btn-primary" target="_blank">🗺️ Open the App Now</a>
+    <div class="store-badges">
+      <div class="store-badge"><span class="store-icon">📱</span><div><span>iOS App</span><span class="coming-soon">Coming Soon</span></div></div>
+      <div class="store-badge"><span class="store-icon">🤖</span><div><span>Android App</span><span class="coming-soon">Coming Soon</span></div></div>
+      <div class="store-badge"><span class="store-icon">🌐</span><div><span>Web App</span><span class="coming-soon">Live at beta.crittercache.app</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="margin-bottom:16px;">
+    <img src="../../assets/logo.png" alt="Critter Cache" style="height:64px;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));">
+  </div>
+  <p class="footer-tagline">An Adgile Gaming production. Built with love and an unhealthy number of critter puns.</p>
+  <ul class="footer-links">
+    <li><a href="#">Privacy Policy</a></li>
+    <li><a href="#">Terms of Use</a></li>
+    <li><a href="#">Contact</a></li>
+    <li><a href="#">Arachno Arena</a></li>
+  </ul>
+  <p class="footer-copy">© 2026 <span>Adgile Gaming, LLC</span>. All rights reserved.</p>
+</footer>
+
+<script>
+// Fireflies
+const hero = document.querySelector('.hero');
+for (let i = 0; i < 22; i++) {
+  const ff = document.createElement('div');
+  ff.className = 'firefly';
+  ff.style.left = Math.random() * 100 + '%';
+  ff.style.top  = Math.random() * 80  + '%';
+  ff.style.setProperty('--dx', (Math.random() * 220 - 110) + 'px');
+  ff.style.setProperty('--dy', (Math.random() * 220 - 110) + 'px');
+  ff.style.animationDuration  = (8 + Math.random() * 14) + 's';
+  ff.style.animationDelay     = (Math.random() * 8) + 's';
+  ff.style.width  = ff.style.height = (2 + Math.random() * 3) + 'px';
+  hero.appendChild(ff);
+}
+
+// Scroll reveal — skip hero elements (already in viewport)
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal:not(.hero-skip)').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
